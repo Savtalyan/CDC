@@ -16,7 +16,12 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/postgres/:/docker-entrypoint-initdb.d
 
-  # producer:
+  producer:
+    build: ./services/producer
+    container_name: producer
+    restart: on-failure
+    
+
   # consumer:
 
 
