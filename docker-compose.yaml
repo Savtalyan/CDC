@@ -20,9 +20,12 @@ services:
     build: ./services/producer
     container_name: producer
     restart: on-failure
-    
 
-  # consumer:
+
+  consumer:
+    build: ./services/consumer
+    container_name: consumer
+    restart: on-failure
 
 
 volumes:
