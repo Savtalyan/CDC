@@ -6,12 +6,11 @@ import os
 class Connect:
     def __init__(self):
         self.conn = None
-        self.cursor = None
-        self.db_name = None
         self.db_user = None
-        self.db_pass = None
+        self.db_pass = None 
         self.db_host = None
         self.db_port = None
+        self.db_name = None
 
     def get_env(self):
         load_dotenv()
@@ -30,9 +29,17 @@ class Connect:
         if missing:
             raise ValueError(f"Missing environment variables: {', '.join(missing)}")
 
+        # print(f"""params - name : {self.db_name}, 
+        #         user : {self.db_user},
+        #         pass : {self.db_pass},
+        #         host : {self.db_host},
+        #         port : {self.db_port}""")
+        
     def connect(self):
+
+        self.get_env()
         if not self.db_name or not self.db_user or not self.db_pass:
-            raise RuntimeError("Call get_env() before connect()")
+            raise RuntimeError("Missing DB params")
 
         try:
             self.conn = psycopg2.connect(
@@ -42,7 +49,16 @@ class Connect:
                 host=self.db_host,
                 port=self.db_port
             )
-            self.cursor = self.conn.cursor()
+        except psycopg2.OperationalError as e:
+            raise ConnectionError(f"Failed to connect to database: {e}")    
 
+    def cursor(self):
+        try:
+            return self.conn.cursor()
         except psycopg2.OperationalError as e:
             raise ConnectionError(f"Failed to connect to database: {e}")
+        
+    def close(self):
+        self.conn.commit()
+        self.conn.close()
+        

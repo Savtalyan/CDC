@@ -18,4 +18,4 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY ./src /app
 
-CMD ["python3", "main.py"]
+CMD ["python3", "schema_seed.py"]
