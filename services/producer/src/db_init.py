@@ -4,13 +4,13 @@ from db_conn import Connect
 def create_databases():
     connection = Connect()
     connection.get_env()
-    connection.db_name = 'postgres'
+    connection.db_name = "postgres"
     connection.connect()
-    connection.conn.autocommit=True
+    connection.conn.autocommit = True
 
     cur = connection.cursor()
     cur.execute("SELECT 1 FROM pg_database WHERE datname = 'cdc_db';")
-    exists = cur.fetchone() 
+    exists = cur.fetchone()
 
     if not exists:
         cur.execute("CREATE DATABASE cdc_db;")
@@ -22,15 +22,16 @@ def create_databases():
 
 
 def create_tables():
+
     conn = Connect()
     conn.get_env()
-    conn.db_name = 'cdc_db'
-    conn.connect()
 
+    conn.db_name = "cdc_db"
+
+    conn.connect()
     cur = conn.cursor()
 
-    cur.execute(
-            """
+    cur.execute("""
 -- ############## USERS ###################################
 CREATE TABLE IF NOT EXISTS users
 (
@@ -61,8 +62,7 @@ CREATE TABLE IF NOT EXISTS posts
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
 
-"""
-    )
+""")
     conn.close()
     print("tables created")
 

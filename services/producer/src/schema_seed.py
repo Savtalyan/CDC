@@ -1,4 +1,4 @@
-from db_conn import Connect 
+from db_conn import Connect
 import psycopg2
 
 connection = Connect()
@@ -22,15 +22,13 @@ if not exists:
 connection.close()
 
 
-
 conn = Connect()
-conn.db_name="cdc_db"
+conn.db_name = "cdc_db"
 conn.connect()
 
 cursor = conn.cursor()
 
-cursor.execute(
-            """
+cursor.execute("""
 -- ############## USERS ###################################
 CREATE TABLE IF NOT EXISTS users
 (
@@ -61,7 +59,5 @@ CREATE TABLE IF NOT EXISTS posts
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
 
-"""
-    )
+""")
 conn.close()
-

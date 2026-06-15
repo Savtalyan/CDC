@@ -7,7 +7,7 @@ class Connect:
     def __init__(self):
         self.conn = None
         self.db_user = None
-        self.db_pass = None 
+        self.db_pass = None
         self.db_host = None
         self.db_port = None
         self.db_name = None
@@ -22,23 +22,20 @@ class Connect:
         self.db_port = os.getenv("POSTGRES_PORT", "5432")
 
         missing = [
-            var for var in ["POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"]
+            var
+            for var in ["POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"]
             if os.getenv(var) is None
         ]
 
         if missing:
             raise ValueError(f"Missing environment variables: {', '.join(missing)}")
 
-        # print(f"""params - name : {self.db_name}, 
-        #         user : {self.db_user},
-        #         pass : {self.db_pass},
-        #         host : {self.db_host},
-        #         port : {self.db_port}""")
-        
     def connect(self):
-        
+
         if not self.db_name or not self.db_user or not self.db_pass:
-            print(f"db_name : {self.db_name}, db_user : {self.db_user}, db_pass : {self.db_pass}")
+            print(
+                f"db_name : {self.db_name}, db_user : {self.db_user}, db_pass : {self.db_pass}"
+            )
             raise RuntimeError(f"Missing DB params")
 
         try:
@@ -47,19 +44,18 @@ class Connect:
                 user=self.db_user,
                 password=self.db_pass,
                 host=self.db_host,
-                port=self.db_port
+                port=self.db_port,
             )
         except psycopg2.OperationalError as e:
-            raise ConnectionError(f"Failed to connect to database: {e}")    
+            raise ConnectionError(f"Failed to connect to database: {e}")
 
     def cursor(self):
         try:
             return self.conn.cursor()
         except psycopg2.OperationalError as e:
             raise ConnectionError(f"Failed to connect to database: {e}")
-        
+
     def close(self):
         if not self.conn.autocommit:
             self.conn.commit()
         self.conn.close()
-            

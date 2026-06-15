@@ -2,7 +2,7 @@ from factories.post_factory import PostFactory
 from factories.user_factory import UserFactory
 
 
-class DataFactory:    
+class DataFactory:
     user_factory = UserFactory
     post_factory = PostFactory
 
