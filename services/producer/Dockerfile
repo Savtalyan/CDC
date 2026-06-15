@@ -17,5 +17,8 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY ./src /app
+COPY entrypoint.sh .
 
-CMD ["python3", "schema_seed.py"]
+RUN chmod +x entrypoint.sh   # make it executable
+
+ENTRYPOINT ["./entrypoint.sh"]

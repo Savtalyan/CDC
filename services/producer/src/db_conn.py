@@ -36,10 +36,10 @@ class Connect:
         #         port : {self.db_port}""")
         
     def connect(self):
-
-        self.get_env()
+        
         if not self.db_name or not self.db_user or not self.db_pass:
-            raise RuntimeError("Missing DB params")
+            print(f"db_name : {self.db_name}, db_user : {self.db_user}, db_pass : {self.db_pass}")
+            raise RuntimeError(f"Missing DB params")
 
         try:
             self.conn = psycopg2.connect(
@@ -59,6 +59,7 @@ class Connect:
             raise ConnectionError(f"Failed to connect to database: {e}")
         
     def close(self):
-        self.conn.commit()
+        if not self.conn.autocommit:
+            self.conn.commit()
         self.conn.close()
-        
+            

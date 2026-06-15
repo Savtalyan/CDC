@@ -37,7 +37,7 @@ services:
 
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       kafka_broker:
         condition: service_started
       kafka_controller:
