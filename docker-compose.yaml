@@ -1,14 +1,19 @@
 services:
+
+  # ============================================================
+  #  POSTGRES
+  # ============================================================
   postgres:
+    image: postgres:16
+    container_name: postgres
     command:
       - postgres
       - -c
       - wal_level=logical
 
-    image: postgres:16
-    container_name: postgres
     ports:
       - "5432:5432"
+
     env_file:
       - .env
 
@@ -28,37 +33,87 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/postgres/:/docker-entrypoint-initdb.d
 
-  producer:
-    build: ./services/producer
-    container_name: producer
-    restart: on-failure
-    env_file:
-      - .env
+
+  # ============================================================
+  #  KAFKA CONTROLLER (KRaft) — no dependencies
+  # ============================================================
+  kafka_controller:
+    image: apache/kafka:4.0.0
+    container_name: kafka_controller
+
+    ports:
+      - "9093:9093"
+
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: controller
+      KAFKA_LISTENERS: CONTROLLER://:9093
+      KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 2@kafka_controller:9093
+
+
+  # ============================================================
+  #  KAFKA BROKER — waits for controller
+  # ============================================================
+  kafka_broker:
+    image: apache/kafka:4.0.0
+    container_name: kafka_broker
+
+    ports:
+      - "9092:9092"
+
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_broker:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 2@kafka_controller:9093
+
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
 
     depends_on:
-      postgres:
+      kafka_controller:
+        condition: service_started
+
+
+  # ============================================================
+  #  SCHEMA REGISTRY — waits for broker to be healthy
+  # ============================================================
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.5.0
+    container_name: schema-registry
+    restart: on-failure
+
+    ports:
+      - "8081:8081"
+
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka_broker:9092
+
+    depends_on:
+      kafka_broker:
         condition: service_healthy
-      kafka_broker:
-        condition: service_started
-      kafka_controller:
-        condition: service_started
 
-  consumer:
-    build: ./services/consumer
-    container_name: consumer
-    restart: on-failure
 
-    depends_on:
-      postgres:
-        condition: service_started
-      kafka_broker:
-        condition: service_started
-      kafka_controller:
-        condition: service_started
-
+  # ============================================================
+  #  DEBEZIUM — waits for broker + schema registry
+  # ============================================================
   debezium:
-    image: debezium/connect:2.7.3.Final
+    build: ./infrastructure/debezium
     container_name: debezium
+    restart: on-failure
 
     ports:
       - "8083:8083"
@@ -76,82 +131,51 @@ services:
       OFFSET_STORAGE_REPLICATION_FACTOR: 1
       STATUS_STORAGE_REPLICATION_FACTOR: 1
 
-      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-
-      KEY_CONVERTER_SCHEMAS_ENABLE: "false"
-      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
 
     depends_on:
-      - kafka_broker
-      - kafka_controller
+      kafka_broker:
+        condition: service_healthy
+      schema-registry:
+        condition: service_started
+      postgres:
+        condition: service_healthy
 
-  kafka_broker:
-    image: apache/kafka:4.0.0
-    container_name: kafka_broker
 
-    ports:
-      - "9092:9092"
-
-    environment:
-      KAFKA_NODE_ID: 1
-
-      KAFKA_PROCESS_ROLES: broker
-
-      # Listen on all interfaces inside container
-      KAFKA_LISTENERS: PLAINTEXT://:9092
-
-      # Clients inside docker network use this hostname
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_broker:9092
-
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-
-      # Shared cluster id
-      KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-
-      # Controller quorum
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-
-      # FIX: use VOTERS, not VOTES
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 2@kafka_controller:9093
+  # ============================================================
+  #  SEEDER — waits for postgres + broker
+  # ============================================================
+  seeder:
+    build: ./services/seeder
+    container_name: seeder
+    restart: on-failure
+    env_file:
+      - .env
 
     depends_on:
       postgres:
         condition: service_healthy
+      kafka_broker:
+        condition: service_healthy
 
-  kafka_controller:
-    image: apache/kafka:4.0.0
-    container_name: kafka_controller
 
-    ports:
-      - "9093:9093"
-
-    environment:
-      KAFKA_NODE_ID: 2
-
-      KAFKA_PROCESS_ROLES: controller
-
-      # Listen on all interfaces
-      KAFKA_LISTENERS: CONTROLLER://:9093
-
-      # Shared cluster id
-      KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-
-      # FIX: use VOTERS, not VOTES
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 2@kafka_controller:9093
-
-      # FIX: removed KAFKA_ADVERTISED_LISTENERS
-      # Controllers do not advertise client endpoints
+  # ============================================================
+  #  CONSUMER — waits for broker only
+  # ============================================================
+  consumer:
+    build: ./services/consumer
+    container_name: consumer
+    restart: on-failure
+    env_file:
+      - .env
 
     depends_on:
-      postgres:
+      kafka_broker:
         condition: service_healthy
+
 
 volumes:
   postgres_data:

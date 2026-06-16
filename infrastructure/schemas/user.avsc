@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "User",
+  "namespace": "cdc",
+  "fields": [
+    {"name": "id",          "type": "int"},
+    {"name": "u_first_name","type": "string"},
+    {"name": "u_last_name", "type": "string"},
+    {"name": "u_email",     "type": "string"},
+    {"name": "u_phone",     "type": "string"},
+    {"name": "u_city",      "type": "string"},
+    {"name": "u_country",   "type": "string"},
+    {"name": "u_postal",    "type": "string"}
+  ]
+}

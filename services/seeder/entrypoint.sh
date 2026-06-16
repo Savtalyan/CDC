@@ -21,5 +21,5 @@ done
 echo "Running db init..."
 python3 db_init.py
 
-echo "Starting producer..."
+echo "Starting seeder..."
 python3 main.py
