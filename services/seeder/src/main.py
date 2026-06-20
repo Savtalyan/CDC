@@ -1,7 +1,62 @@
 from factories.data_factory import DataFactory
 from factories.post_factory import PostFactory
 from db_conn import Connect
+import requests 
+import time
 
+def init_debezium():
+    debezium_url = "http://debezium:8083"
+    
+    while True:
+        try:
+            response = requests.get(f"{debezium_url}/")
+            if response.status_code == 200:
+                break
+        except requests.exceptions.ConnectionError:
+            pass
+        print("Waiting for Debezium...")
+        time.sleep(5)
+
+    existing = requests.get(f"{debezium_url}/connectors/postgres-connector")
+    if existing.status_code == 200:
+        print("Connector already registered. Skipping")
+        return
+
+    connector_config = {
+        "name": "postgres-connector",
+        "config": {
+            "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+            "database.hostname": "postgres",
+            "database.port": "5432",
+            "database.user": "debezium_user",
+            "database.password": "debezium_pass",
+            "database.dbname": "cdc_db",
+            "topic.prefix": "cdc",
+            "plugin.name": "pgoutput",
+            "publication.name": "debezium_publication",
+            "key.converter": "io.confluent.connect.avro.AvroConverter",
+            "key.converter.schema.registry.url": "http://schema-registry:8081",
+            "value.converter": "io.confluent.connect.avro.AvroConverter",
+            "value.converter.schema.registry.url": "http://schema-registry:8081"
+        }
+    }
+
+    for attempt in range(10):
+        response = requests.post(
+            f"{debezium_url}/connectors",
+            json=connector_config,
+            headers={"Content-Type": "application/json"}
+        )
+        if response.status_code == 201:
+            print("Connector registered successfully")
+            return
+        elif response.status_code == 500 and "cluster" in response.text:
+            print(f"Debezium not ready yet (attempt {attempt + 1}/10), retrying...")
+            time.sleep(5)
+        else:
+            raise RuntimeError(f"Failed to register connector: {response.status_code} {response.text}")
+
+    raise RuntimeError("Debezium did not become ready after 10 attempts")
 
 def write_users(users):
     conn = Connect()
@@ -58,9 +113,10 @@ def write_posts(posts):
 
 
 def main():
-    users, _ = DataFactory.generate(1000, 1000)
+    init_debezium()
+    users, _ = DataFactory.generate(100, 100)
     real_user_ids = write_users(users)
-    posts = PostFactory.create_many(real_user_ids, 1000)
+    posts = PostFactory.create_many(real_user_ids, 1001)
     write_posts(posts)
 
 
