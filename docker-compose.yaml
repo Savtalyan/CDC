@@ -171,7 +171,7 @@ services:
   consumer:
     build: ./services/consumer
     container_name: consumer
-    restart: on-failure
+    restart: always
     env_file:
       - .env
 
