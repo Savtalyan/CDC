@@ -1,5 +1,5 @@
 numpy>=1.27.0
-confluent-kafka==2.11.1
+confluent-kafka[avro,schemaregistry]
 
 pyarrow==21.0.0
 pandas==2.3.2

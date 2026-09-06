@@ -8,17 +8,13 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     build-essential \
     libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --upgrade pip
-
 COPY requirements.txt .
-
 RUN pip3 install --no-cache-dir -r requirements.txt
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-COPY ./src /app
-COPY entrypoint.sh .
-
-RUN chmod +x entrypoint.sh   # make it executable
-
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
