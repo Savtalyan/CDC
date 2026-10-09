@@ -21,11 +21,12 @@ consumer.subscribe(["cdc.public.users"])
 
 try:
     while True:
-        msg = consumer.poll(1.0)
-        if msg is None:
+        try:
+            msg = consumer.poll(1.0)
+        except ConsumeError as e:
+            print(f"consume error: {e}")
             continue
-        if msg.error():
-            print(msg.error())
+        if msg is None:
             continue
         print(f"key={msg.key()}  value={msg.value()}")
 finally:

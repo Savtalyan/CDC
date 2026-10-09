@@ -17,6 +17,12 @@ RUN curl --fail -sS -L -o /kafka/connect/debezium-connector-postgres/kafka-conne
  && curl --fail -sS -L -o /kafka/connect/debezium-connector-postgres/common-config-${CONFLUENT_VERSION}.jar \
       https://packages.confluent.io/maven/io/confluent/common-config/${CONFLUENT_VERSION}/common-config-${CONFLUENT_VERSION}.jar \
  && curl --fail -sS -L -o /kafka/connect/debezium-connector-postgres/common-utils-${CONFLUENT_VERSION}.jar \
-      https://packages.confluent.io/maven/io/confluent/common-utils/${CONFLUENT_VERSION}/common-utils-${CONFLUENT_VERSION}.jar
-
+      https://packages.confluent.io/maven/io/confluent/common-utils/${CONFLUENT_VERSION}/common-utils-${CONFLUENT_VERSION}.jar\
+ && curl --fail -sS -L -o /kafka/connect/debezium-connector-postgres/kafka-schema-converter-${CONFLUENT_VERSION}.jar \
+      https://packages.confluent.io/maven/io/confluent/kafka-schema-converter/${CONFLUENT_VERSION}/kafka-schema-converter-${CONFLUENT_VERSION}.jar
+RUN cd /kafka/connect/debezium-connector-postgres \
+ && curl --fail -sSLO https://repo1.maven.org/maven2/org/apache/avro/avro/1.11.3/avro-1.11.3.jar \
+ && curl --fail -sSLO https://repo1.maven.org/maven2/com/google/guava/guava/32.0.1-jre/guava-32.0.1-jre.jar \
+ && curl --fail -sSLO https://repo1.maven.org/maven2/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar \
+ && curl --fail -sSLO https://repo1.maven.org/maven2/org/apache/commons/commons-compress/1.21/commons-compress-1.21.jar
 USER 1001
