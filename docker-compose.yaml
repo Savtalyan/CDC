@@ -141,7 +141,7 @@ services:
       kafka_broker:
         condition: service_healthy
 
-        
+
   # ============================================================
   #  DEBEZIUM — waits for broker + schema registry
   # ============================================================
@@ -171,6 +171,12 @@ services:
       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
 
+    healthcheck:
+      test: ["CMD-SHELL", 'curl -H "Accept:application/json" localhost:8083/connectors/postgres-connector/status']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
     depends_on:
       kafka_broker:
         condition: service_healthy
@@ -178,6 +184,23 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+  
+  # ============================================================
+  #  Connector-init — initializes debezium connector
+  # ============================================================
+  connector-init:
+    image: curlimages/curl:8.10.1
+    container_name: connector-init
+    depends_on:
+      debezium:
+        condition: service_healthy
+    volumes:
+      - ./infrastructure/debezium/connectors:/connectors:ro
+    command: >
+      -sf -X PUT http://debezium:8083/connectors/postgres-connector/config
+      -H "Content-Type: application/json"
+      -d @/connectors/postgres-connector.json
+    restart: on-failure
 
 
   # ============================================================
@@ -201,6 +224,27 @@ services:
       debezium:
         condition: service_started
 
+  # ============================================================
+  #  PRODUCER - produces user records mimicing real usage
+  # ============================================================
+  producer:
+    build: ./services/producer
+    container_name: producer
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./services/producer/src:/app
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka_broker:
+        condition: service_healthy
+      debezium:
+        condition: service_healthy
+      seeder:
+        condition: service_started
 
   # ============================================================
   #  CONSUMER — waits for broker only
