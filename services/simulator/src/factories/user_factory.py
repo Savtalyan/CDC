@@ -19,3 +19,23 @@ class UserFactory:
     @staticmethod
     def create_many(n):
         return [UserFactory.create() for _ in range(n)]
+
+    @staticmethod
+    def create_email():
+        return fake.email()
+
+    @staticmethod
+    def create_phone():
+        return fake.phone_number()
+
+    @staticmethod
+    def create_city():
+        return fake.city()
+
+    @staticmethod
+    def create_country():
+        return fake.country()
+
+    @staticmethod
+    def create_postal_code():
+        return fake.postcode()

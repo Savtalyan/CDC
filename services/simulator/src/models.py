@@ -18,6 +18,9 @@ class User(Base):
     u_city :        Mapped[str] = mapped_column(String(24))
     u_country :     Mapped[str] = mapped_column(String(24))
     u_postal :      Mapped[str] = mapped_column(String(14))
+    
+    posts :         Mapped[list["Post"]] = relationship(back_populates="user", passive_delete=True)
+
 
     @property
     def full_name(self):
@@ -34,3 +37,6 @@ class Post(Base):
     content :       Mapped[str] = mapped_column(String(255))
     created_at :    Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at :    Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    user :          Mapped["User"] = relationship(back_populates="post")
+

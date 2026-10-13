@@ -17,3 +17,11 @@ class PostFactory:
     @staticmethod
     def create_many(user_ids, n):
         return [PostFactory.create(user_ids) for _ in range(n)]
+
+    @staticmethod
+    def create_title():
+        return fake.sentence(nb_words=5)
+
+    @staticmethod
+    def create_content():
+        return fake.text(max_nb_chars=200)

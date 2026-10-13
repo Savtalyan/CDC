@@ -1,67 +1,31 @@
 
 from simulator.factories.user_factory import UserFactory
-
+from sqlalchemy.orm import Session
 
 class UserRepository:
-    def __init__(self, conn):
-        self.conn = conn
 
-    ###########################################################################################################
-    # insert a user into database
-    ###########################################################################################################
-    def insert(self, user: dict) -> int | None:
-        with self.conn.cursor() as cur:
-            try:
-                cur.execute(
-                    """
-                    INSERT INTO users (u_first_name, u_last_name, u_email, u_phone, u_city, u_country, u_postal)
-                    VALUES (%(u_first_name)s, %(u_last_name)s, %(u_email)s, %(u_phone)s,
-                            %(u_city)s, %(u_country)s, %(u_postal)s)
-                    ON CONFLICT DO NOTHING
-                    RETURNING id
-                    """,
-                    user,
-                )
-            except OperationalError as e:
-                print(f"ERROR: {e.message}")
-                return None
-            
-            row = cur.fetchone()
-        return 1 if row else None 
+    def __init__(self, session):
+        self.session = session
 
-    ###########################################################################################################
-    # delete a user from database
-    ###########################################################################################################
-    def delete(self, user_id: int) -> None:
-        user_id = self.random_id()
+    def insert(self) -> int | None:
+        user = UserFactory.create()
 
-        with self.conn.cursor() as cur:
-            try:
-                cur.execute("DELETE FROM users WHERE id=%s", (user_id))
+        stmt = insert(User).values(**user).on_failure_do_nothing().returning(User.id)
+        user_id = self.session.scalar(stmt)
+        self.session.commit()
+        return user_id
 
-            except OperationalError as e:
-                print(f"ERROR: {e.message}")
-                return None
-        return 1
+    def random_user(self) -> int | None:
+        return self.session.scalar(select(User.id).order_by(func.random()).limit(1))
 
-    ###########################################################################################################
-    # fetch a random user id 
-    ###########################################################################################################
-    def random_id(self) -> int | None:
-        with self.conn.cursor() as cur:
-            try:
-                cur.execute(
-                    """
-                    SELECT id FROM users ORDER_BY random() LIMIT 1
-                    """
-                )
-            except OperationalError as e:
-                print(f"ERROR: {e.message}")
-                return None
+    def count(self) -> int:
+        return self.session.scalar(select(func.count())).select_from(User)
 
-            row = cur.fetchone()
-        return row[0] if row else None 
-        
+    def delete(self) -> None:
+       user_id = self.random_id()
+       self.session.execute(delete(User).where(User.id = user_id))
+       self.session.commit()
 
-
-
+    def update(self, user_id: int, **fields) -> None:
+        self.session.execute(update(User).where(User.id == user_id).values(**fields))
+        self.session.commit()

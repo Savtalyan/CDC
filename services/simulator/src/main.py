@@ -3,23 +3,19 @@ import random
 import signal 
 import time 
 
-from simulator.src.repositories.user_repository import UserRepository
-from simulator.src.repositories.post_repository import PostRepository
-from simulator.src.factories.user_factory import UserFactory
-from simulator.src.factories.post_factory import PostFactory
-from simulator.src.db import Connect
-# TODO: add activity events factory 
-
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 #####################################################################################
 # Simulator - class that is meant to simulate the real user activity
 #####################################################################################
 
 class Simulator:
-    def __init__(self, users : UserRepository, posts: PostRepository):
+    def __init__(self, users : UserRepository, posts: PostRepository, session: Session):
         self.users = users
         self.posts = posts
         self.running = True
+        self.session = session
 
     def stop(self, *_):
         self.running = False
@@ -88,11 +84,7 @@ class Simulator:
 
 
     def insert_user(self) -> None:
-        """
-        Insert a user created by factory function
-        into the database
-        """
-        self.users.insert(UserFactory.create())
+        self.users.insert()
 
     def delete_user(self) -> None:
         """

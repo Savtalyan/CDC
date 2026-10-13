@@ -89,7 +89,7 @@ def fetch_user():
             """
         )
 
-def execute(operation: str):
+def execute(operation: str) -> None:
     match operation:
         case "insert_user":
             insert_user()
@@ -107,15 +107,18 @@ def execute(operation: str):
             print("Warning: Wrong operation type")
 
 
-def insert_user():
-    user = UserFactory.create()
-    write_user(user)
+def insert_user() -> None:
+    self.users.insert()
 
-def delete_user():
-    user = 
+def delete_user() -> None:
+    self.users.delete()
 
-def update_user():
-    pass 
+def update_user() -> None:
+    user_id = self.users.random_id()
+    if users_id is None:
+        return
+    fresh = 
+    
 
 def insert_post():
     pass
