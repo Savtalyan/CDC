@@ -1,5 +1,5 @@
-
-from simulator.factories.user_factory import UserFactory
+from sqlalchemy import update, delete, func, select
+from sqlalchemy.dialects.postgres import insert
 from sqlalchemy.orm import Session
 
 class UserRepository:
@@ -7,10 +7,8 @@ class UserRepository:
     def __init__(self, session):
         self.session = session
 
-    def insert(self) -> int | None:
-        user = UserFactory.create()
-
-        stmt = insert(User).values(**user).on_failure_do_nothing().returning(User.id)
+    def insert(self, data: dict) -> int | None:
+        stmt = insert(User).values(**data).on_failure_do_nothing().returning(User.id)
         user_id = self.session.scalar(stmt)
         self.session.commit()
         return user_id
@@ -21,8 +19,7 @@ class UserRepository:
     def count(self) -> int:
         return self.session.scalar(select(func.count())).select_from(User)
 
-    def delete(self) -> None:
-       user_id = self.random_id()
+    def delete(self, user_id) -> None:
        self.session.execute(delete(User).where(User.id = user_id))
        self.session.commit()
 

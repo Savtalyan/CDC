@@ -1,14 +1,14 @@
-
-from simulator.factories.post_factory import PostFactory
+from sqlalchemy import update, delete, select, func
+from sqlalchemy.dialects.postgres import insert
 from sqlalchemy.orm import Session
+
 
 class PostRepository:
     def __init__(self, session):
         self.session = session
 
-    def insert(self) -> int | None:
-        post = PostFactory.create()
-        stmt = insert(Post).values(**post).on_conflict_do_nothing().returning(Post.id)
+    def insert(self, data: dict) -> int | None:
+        stmt = insert(Post).values(**data).on_conflict_do_nothing().returning(Post.id)
         post_id = self.session.scalar(stmt)
         self.session.commit()
         return post_id
@@ -19,9 +19,7 @@ class PostRepository:
     def count(self) -> int | None:
         return self.session.scalar(select(func.count()).select_from(Post))
 
-    def delete(self) -> None:
-        post_id = self.random_id()
-
+    def delete(self, post_id: int) -> None:
         self.session.execute(delete(Post).where(Post.id = post_id))
         self.session.commit()
    
