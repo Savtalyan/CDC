@@ -15,7 +15,7 @@ class UserRepository:
         self.session.commit()
         return user_id
 
-    def random_user(self) -> int | None:
+    def random_id(self) -> int | None:
         return self.session.scalar(select(User.id).order_by(func.random()).limit(1))
 
     def count(self) -> int:

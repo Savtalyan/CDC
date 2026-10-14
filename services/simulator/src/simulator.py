@@ -82,7 +82,7 @@ class Simulator:
             "delete_post"       : 0.15,
             "activity_event"    : 0.40,
         }
-        return random.choice(list(weights), weights=list(weights.values()))[0]
+        return random.choices(list(weights), weights=list(weights.values()))[0]
 
     def _execute(self, operation: str) -> None:
         match(operation):
@@ -118,7 +118,7 @@ class Simulator:
         user_id = self.users.random_id()
         if user_id is None:
             return 
-        field = random.choice(USER_UPDATABLE_FIELDS)
+        field = random.choice(USER_UPDATEABLE_FIELDS)
         value = UserFactory.create()[field]
         self.users.update(user_id, **{field: value})
         log.info("update_user -> %s.%s", user_id, field)
