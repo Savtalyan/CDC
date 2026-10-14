@@ -208,6 +208,9 @@ services:
   simulator:
     build: ./services/simulator
     container_name: simulator
+    environment:
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
     restart: always
     env_file:
       - .env
@@ -229,6 +232,9 @@ services:
   consumer:
     build: ./services/consumer
     container_name: consumer
+    environment:
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
     restart: always
     env_file:
       - .env
