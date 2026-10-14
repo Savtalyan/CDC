@@ -23,7 +23,7 @@ try:
     while True:
         try:
             msg = consumer.poll(1.0)
-        except ConsumeError as e:
+        except RuntimeError as e:
             print(f"consume error: {e}")
             continue
         if msg is None:

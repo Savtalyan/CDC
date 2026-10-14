@@ -1,6 +1,6 @@
 from datetime import datetime 
 from sqlalchemy import ForeignKey, String, DateTime, func
-from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
+from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase, relationship
 
 
 class Base(DeclarativeBase):
@@ -8,7 +8,7 @@ class Base(DeclarativeBase):
 
 
 class User(Base):
-    __tabelname__ = "users"
+    __tablename__ = "users"
 
     id :            Mapped[int] = mapped_column(primary_key=True)
     u_first_name :  Mapped[str] = mapped_column(String(64))
@@ -19,7 +19,7 @@ class User(Base):
     u_country :     Mapped[str] = mapped_column(String(24))
     u_postal :      Mapped[str] = mapped_column(String(14))
     
-    posts :         Mapped[list["Post"]] = relationship(back_populates="user", passive_delete=True)
+    posts :         Mapped[list["Post"]] = relationship(back_populates="user", passive_deletes=True)
 
 
     @property
@@ -38,5 +38,5 @@ class Post(Base):
     created_at :    Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at :    Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
-    user :          Mapped["User"] = relationship(back_populates="post")
+    user :          Mapped["User"] = relationship(back_populates="posts")
 

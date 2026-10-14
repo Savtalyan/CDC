@@ -1,7 +1,8 @@
 from sqlalchemy import update, delete, select, func
-from sqlalchemy.dialects.postgres import insert
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from models import Post
 
 class PostRepository:
     def __init__(self, session):
@@ -20,7 +21,7 @@ class PostRepository:
         return self.session.scalar(select(func.count()).select_from(Post))
 
     def delete(self, post_id: int) -> None:
-        self.session.execute(delete(Post).where(Post.id = post_id))
+        self.session.execute(delete(Post).where(Post.id == post_id))
         self.session.commit()
    
     def update(self, post_id: int, **fields) -> None:

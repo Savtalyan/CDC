@@ -202,39 +202,17 @@ services:
       -d @/connectors/postgres-connector.json
     restart: on-failure
 
-
   # ============================================================
-  #  SEEDER — waits for postgres + broker, then registers the
-  #  Debezium connector before seeding data
+  #  Simulator - produces user records mimicing real usage
   # ============================================================
-  seeder:
-    build: ./services/seeder
-    container_name: seeder
-    restart: on-failure
-    env_file:
-      - .env
-    volumes:
-      - ./services/seeder/src:/app
-
-    depends_on:
-      postgres:
-        condition: service_healthy
-      kafka_broker:
-        condition: service_healthy
-      debezium:
-        condition: service_started
-
-  # ============================================================
-  #  PRODUCER - produces user records mimicing real usage
-  # ============================================================
-  producer:
-    build: ./services/producer
-    container_name: producer
+  simulator:
+    build: ./services/simulator
+    container_name: simulator
     restart: always
     env_file:
       - .env
     volumes:
-      - ./services/producer/src:/app
+      - ./services/simulator/src:/app
 
     depends_on:
       postgres:
@@ -243,8 +221,7 @@ services:
         condition: service_healthy
       debezium:
         condition: service_healthy
-      seeder:
-        condition: service_started
+
 
   # ============================================================
   #  CONSUMER — waits for broker only

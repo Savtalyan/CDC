@@ -15,8 +15,5 @@ psycopg2.connect(dbname='postgres', user=os.getenv('POSTGRES_USER'),
   sleep 2
 done
 
-echo "Running db init..."
-python3 db_init.py
-
-echo "Starting seeder (registers connector, then seeds)..."
+echo "Starting simulator"
 python3 main.py

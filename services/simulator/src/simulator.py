@@ -49,7 +49,7 @@ class Simulator:
         _running=False
 
 
-    def run(self, session: Session) -> None:
+    def _run(self, session: Session) -> None:
         self.session = session
         self.users = UserRepository(session)
         self.posts = PostRepository(session)
@@ -60,13 +60,13 @@ class Simulator:
         while Simulator._running:
             operation = None;
             try:
-                operation = choose_operation(self.users.count())
+                operation = self.choose_operation(self.users.count())
                 self._execute(operation)
             except SQLAlchemyError as e:
                 self.session.rollback()
                 reason = str(getattr(e, "orig", e)).splitlines()[0]
                 log.warning("%s failed: %s", operation, reason)
-            time.sleep(random.expovariate(config.EVENTs_PER_SEC))
+            time.sleep(random.expovariate(config.EVENTS_PER_SEC))
 
     
     def choose_operation(self, user_count : int) -> str:
@@ -106,7 +106,7 @@ class Simulator:
 
     def _insert_user(self) -> None:
         user_id = self.users.insert(UserFactory.create())
-        log.info("insert_user -> %s", user_id if User_id else "skipped (duplicate)")
+        log.info("insert_user -> %s", user_id if user_id else "skipped (duplicate)")
 
     def _delete_user(self) -> None:
         user_id = self.users.random_id()
